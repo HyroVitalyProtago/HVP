@@ -4,7 +4,7 @@ using System;
 using UnityEditor.iOS.Xcode;
 using VRStandardAssets.Utils;
 
-public class PressButton : MonoBehaviour {
+public class Activator : MonoBehaviour {
 
     public event Action<bool> OnActivation;
 
@@ -17,15 +17,27 @@ public class PressButton : MonoBehaviour {
     [SerializeField]
     Transform playerTransf;
 
+    bool isNear;
+
     Vector3 startPos, endPos, startRot, endRot;
     bool activated;
 
     void Awake() {
-        startPos = transform.position;
+        startPos = transform.localPosition;
         endPos = startPos + deltaPos;
-        startRot = transform.rotation.eulerAngles;
-        endRot = startRot + deltaRot;
+        startRot = deltaRot;
+        endRot = - deltaRot;
+        transform.localRotation = Quaternion.Euler(startRot);
         activated = false;
+        isNear = false;
+    }
+
+    void OnTriggerEnter() {
+        isNear = true;
+    }
+
+    void OnTriggerExit() {
+        isNear = false;
     }
 
     void OnEnable() {
@@ -34,8 +46,7 @@ public class PressButton : MonoBehaviour {
 
     void OnClick() {
         Vector3 relativePos = transform.InverseTransformPoint(playerTransf.position);
-        Debug.Log(Vector3.Distance(transform.position, playerTransf.position), this);
-        if (Vector3.Distance(transform.position,playerTransf.position) < 2f && relativePos.y * transform.localScale.y > 0f) { //&& relativePos.y * transform.localScale.y <= 1.5f && Mathf.Abs(relativePos.x) <= 0.5f ) {
+        if (isNear) { //&& relativePos.y * transform.localScale.y <= 1.5f && Mathf.Abs(relativePos.x) <= 0.5f ) {
             GenericActivate(!activated);
         }
     }
@@ -53,16 +64,16 @@ public class PressButton : MonoBehaviour {
             OnActivation(false);
         }
 
-        Vector3 startPos = transform.position;
+        Vector3 startPos = transform.localPosition;
         Vector3 endPos = !activated ? this.startPos : this.endPos;
 
-        Vector3 startRot = transform.rotation.eulerAngles;
+        Vector3 startRot = !activated ? this.endRot : this.startRot;
         Vector3 endRot = !activated ? this.startRot : this.endRot;
-
+        
         float timer = 0f;
         while (timer <= duration) {
-            transform.position = Vector3.Lerp(startPos, endPos, timer / duration);
-            transform.rotation = Quaternion.Euler(Vector3.Lerp(startRot, endRot, timer / duration));
+            transform.localPosition = Vector3.Lerp(startPos, endPos, timer / duration);
+            transform.localRotation = Quaternion.Euler(Vector3.Lerp(startRot, endRot, timer / duration));
             timer += Time.deltaTime;
             yield return null;
         }
@@ -71,4 +82,10 @@ public class PressButton : MonoBehaviour {
         if (b && OnActivation != null)
             OnActivation(true);
     }
+
+    public void ActivateByLink() {
+        StopAllCoroutines();
+        StartCoroutine(Activate(!activated));
+    }
+
 }
