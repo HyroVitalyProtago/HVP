@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System;
-using UnityEditor.iOS.Xcode;
 using VRStandardAssets.Utils;
 
 public class Activator : MonoBehaviour {
